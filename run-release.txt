@@ -1,0 +1,64 @@
+cd android; .\gradlew clean; cd..
+npm install --save-dev jetifier
+npx jetify
+
+
+---- get device log crashes android--- 
+adb logcat -b all -d -v threadtime > onesignal_crash_logcat.txt
+
+--solving 'unable to connectot remorte debugger'
+adb reverse tcp:8081 tcp:8081
+
+-- solving androidX issues PS 
+npm i jetifier; npx jetify
+
+#-- release process
+react-native bundle --platform android --dev false --entry-file index.js --bundle-output android/app/src/main/assets/index.android.bundle --assets-dest android/app/src/main/res
+
+
+#-- Microsoft CMD shell script for resolve android duplicate resources error
+cd android\app\src\main\res && for /d %i in (drawable*) do rd /S /q "%i" 
+cd ../../../../../
+cd android\app\src\main\res\raw && del /s /q *.json 
+cd ../../../../../../
+
+#-- PS ONLY 
+cd android; .\gradlew clean; cd ..  ****
+cd android; ./gradlew assembleRelease; cd .. 
+
+#----FOR CMD
+cd android &&  gradlew clean && cd..
+export LANG=en_US.UTF-8 && cd android &&  gradlew assembleRelease && cd ..
+
+#---FOR MAC
+cd android;  ./gradlew clean; cd ..
+cd android; ./gradlew assembleRelease; cd .. 
+export LANG=en_US.UTF-8; cd ios; pod deintegrate; pod install; cd ..
+
+#--- iOS menual bundle 
+    cd ios && pod deintegrate && pod install && cd .. ****
+react-native bundle --entry-file='index.js' --bundle-output='./ios/main.jsbundle' --dev=false --platform='ios'
+
+#-- android delete all gradle cachaes
+rm -rf $HOME/.gradle/caches/
+
+##--- resolve  npm conflicts 
+npm i  --legacy-peer-deps
+
+#--  > v6.0.0
+ nvm use v19.4.0
+#-- < 6.0.0
+nvm use v14.15.0
+
+# app HashKey for sms (MAC)
+# DEBUG
+cd android; keytool -exportcert -keystore app/debug.keystore -alias PlayDeploymentCert | xxd -p | tr -d "[:space:]";  cd ..
+# RELASE
+cd android; keytool -exportcert -keystore app/my-release-key.keystore -alias PlayDeploymentCert | xxd -p | tr -d "[:space:]"; cd ..
+
+The following command computes the hash string from your app's  keystore:
+#  to run sha256sum you must first install it with  "brew reinstall coreutils"
+# DEBUG
+cd android; keytool -exportcert -alias PlayDeploymentCert -keystore app/debugy.keystore | xxd -p | tr -d "[:space:]" | echo -n com.bringbringcollect `cat` | sha256sum | tr -d "[:space:]-" | xxd -r -p | base64 | cut -c1-11; cd ..
+# RELASE
+cd android; keytool -exportcert -keystore app/my-release-key.keystore -alias PlayDeploymentCert | xxd -p | tr -d "[:space:]" | echo -n com.bringbringcollect `cat` | sha256sum | tr -d "[:space:]-" | xxd -r -p | base64 | cut -c1-11; cd ..
