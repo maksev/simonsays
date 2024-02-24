@@ -5,10 +5,12 @@ import {
 
 import Home from "./home";
 import Game from "./game";
+import Scores from "./scores";
 
 export type RootStackParamList = {
     Game: undefined;
     Home: undefined;
+    Scores: undefined;
 };
 const Stack = createStackNavigator<RootStackParamList>();
 
@@ -16,12 +18,16 @@ export const AppStack = () => {
     return (
         <Stack.Navigator initialRouteName="Home">
             <Stack.Screen
+                name="Home"
+                component={Home}
+            />
+            <Stack.Screen
                 name="Game"
                 component={Game}
             />
             <Stack.Screen
-                name="Home"
-                component={Home}
+                name="Scores"
+                component={Scores}
             />
         </Stack.Navigator>
     );

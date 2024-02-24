@@ -37,6 +37,22 @@ const styles = StyleSheet.create({
         fontSize: 40,
         color: 'white'
     },
+    whiteSircle: {
+        backgroundColor: 'white',
+        borderRadius: 100,
+        borderBottomColor: 'black',
+        borderBottomWidth: 4,
+        borderEndWidth: 4,
+        borderStartWidth: 4,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+    },
+    topCircle: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+        position: 'absolute',
+    },
     start: {
         borderRadius: (50 / 2),
         backgroundColor: 'red',
@@ -75,6 +91,65 @@ const styles = StyleSheet.create({
         left: 0,
         width: '100%',
         height: '100%',
+    },
+    input: {
+        borderColor: "gray",
+        width: 160,
+        borderWidth: 1,
+        borderRadius: 20,
+        padding: 10,
+    },
+    playerName: {
+        textDecorationLine: 'underline',
+        textDecorationColor: 'blue'
+    },
+    scoreText: {
+        color: 'yellow',
+        fontSize: 14,
+    },
+    allScoreText: {
+        textDecorationLine: 'underline',
+    },
+    centeredView: {
+        flex: 1,
+        justifyContent: 'center',
+        alignItems: 'center',
+        marginTop: 22,
+    },
+    modalView: {
+        margin: 20,
+        backgroundColor: 'white',
+        borderRadius: 20,
+        padding: 35,
+        alignItems: 'center',
+        shadowColor: '#000',
+        shadowOffset: {
+            width: 0,
+            height: 2,
+        },
+        shadowOpacity: 0.25,
+        shadowRadius: 4,
+        elevation: 5,
+    },
+    button: {
+        borderRadius: 20,
+        padding: 10,
+        elevation: 2,
+    },
+    buttonOpen: {
+        backgroundColor: '#F194FF',
+    },
+    buttonClose: {
+        backgroundColor: '#2196F3',
+    },
+    textStyle: {
+        color: 'white',
+        fontWeight: 'bold',
+        textAlign: 'center',
+    },
+    modalText: {
+        marginBottom: 15,
+        textAlign: 'center',
     },
 })
 export default styles;

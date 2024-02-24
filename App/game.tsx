@@ -1,4 +1,4 @@
-import { ParamListBase, useNavigation } from '@react-navigation/native';
+import { useNavigation } from '@react-navigation/native';
 import React, { useState, useEffect, useRef } from 'react';
 import {
     TouchableOpacity,
@@ -7,13 +7,19 @@ import {
     TouchableWithoutFeedback,
     AnimatableNumericValue,
     Dimensions,
+    Pressable,
+    Modal
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import SoundPlayer from 'react-native-sound-player';
 import { RootStackParamList } from './appStack';
 import styles from './styles';
-
+import TxtInput from './txtInput';
+import { Player, partProps } from './types';
+import { getBestResults, getBestResultsByName } from './helper';
 type homeScreenProp = StackNavigationProp<RootStackParamList, 'Game'>;
+
 const Game: React.FC = () => {
     const navigation = useNavigation<homeScreenProp>();
     //states
@@ -21,7 +27,13 @@ const Game: React.FC = () => {
     const [pattern, setPattern] = useState<string[]>([])
     const [opacityColor, setOpacityColor] = useState<string>('');
     const [gameOver, setGameOver] = useState<boolean>(false);
-    const playerIndexClick = useRef<number>(0)
+    const [playerName, setPlayerName] = useState<string>('');
+    const [loading, setLoading] = useState<boolean>(false);
+    const [bestScore, setBestScore] = useState<number>(0);
+    const [modalVisible, setModalVisible] = useState(false);
+
+    const playerIndexClick = useRef<number>(0);
+
     //consts
     const colors: string[] = ['red', 'blue', 'yellow', 'green'];
     const raduis: AnimatableNumericValue = 50;
@@ -38,6 +50,8 @@ const Game: React.FC = () => {
         const _onFinishedLoadingFileSubscription = SoundPlayer.addEventListener('FinishedLoadingFile', ({ success, name, type }) => {
         });
         stopGame();
+        getLastPlayer();
+
         return () => {
             _onFinishedLoadingSubscription.remove();
             _onFinishedPlayingSubscription.remove();
@@ -47,6 +61,15 @@ const Game: React.FC = () => {
     useEffect(() => { }, [opacityColor]);
     useEffect(() => { }, [pattern])
     useEffect(() => { }, [gameOver]);
+    useEffect(() => {
+        const bestScore = async () => {
+            const maxScore = await getBestResultsByName(playerName);
+            setBestScore(maxScore);
+        }
+        if (playerName) {
+            bestScore();
+        }
+    }, [playerName])
     useEffect(() => {
         if (level) {
             navigation.setOptions({
@@ -61,6 +84,14 @@ const Game: React.FC = () => {
     }, [level]);
 
     //functions
+    const getLastPlayer = async () => {
+        setLoading(true);
+        const lastPlayerName = await AsyncStorage.getItem('playerName');
+        if (lastPlayerName) {
+            setPlayerName(lastPlayerName)
+        }
+        setLoading(false);
+    }
     const startGame = () => {
         setLevel(0);
         setPattern([])
@@ -75,6 +106,7 @@ const Game: React.FC = () => {
         setGameOver(false);
     };
     const simonPlay = (newPattern: string[], index: number = 0) => {
+        setLoading(true);
         const color = newPattern[index];
         setOpacityColor(color);
         playSound(color);
@@ -85,6 +117,9 @@ const Game: React.FC = () => {
             if (index <= newPattern.length) {
                 index++;
                 simonPlay(newPattern, index);
+            }
+            else {
+                setLoading(false);
             }
         }, 800)
     }
@@ -108,7 +143,44 @@ const Game: React.FC = () => {
             console.log(`cannot play the sound file`, e);
         }
     };
-    const checkPlayer = (color: string) => {
+
+
+    const saveResults = async () => {
+        const scoreResult = {
+            date: new Date(),
+            score: pattern.length
+        }
+        const player = {
+            name: playerName,
+            scores: [scoreResult]
+        }
+        let players: Array<Player> = [];
+
+        const playersString: string | null = await AsyncStorage.getItem("players");
+        if (playersString) {
+            players = JSON.parse(playersString) || [];
+            const currentPlayer = players.find(p => p.name == playerName);
+            if (currentPlayer) {
+                const maxScore = getBestResults(currentPlayer);
+                setBestScore(maxScore)
+                if (scoreResult.score > maxScore) {
+                    currentPlayer.scores.unshift(scoreResult);
+                    if (currentPlayer.scores.length > 10) {
+                        currentPlayer.scores.pop()
+                    }
+                }
+            }
+            else {
+                players.push(player);
+            }
+            AsyncStorage.setItem("players", JSON.stringify(players));
+        }
+        else {
+            const newPlayers = [player];
+            AsyncStorage.setItem("players", JSON.stringify(newPlayers));
+        }
+    }
+    const checkPlayer = async (color: string) => {
         console.log("playerIndexClick.current", playerIndexClick.current)
         const isValid = pattern[playerIndexClick.current] == color;
         if (isValid) {
@@ -133,23 +205,52 @@ const Game: React.FC = () => {
             navigation.setOptions({
                 title: `Simon Says: GAME OVER :) `
             })
+            await saveResults();
         }
     }
-
     //components
     const Logo: any = () => {
         return (<View
             style={{
                 backgroundColor: 'black',
-                ...styles.actionBlock
+                ...styles.actionBlock,
+                borderTopEndRadius: 100,
+                borderTopStartRadius: 100
             }}
         ><View
-            style={styles.center}
+            style={{
+                ...styles.center,
+                marginTop: 10,
+                height: 20
+            }}
         ><Text
             style={styles.logo}
         >Simon</Text>
             </View>
-        </View>)
+            <View
+                style={{
+                    ...styles.flexRow,
+                    justifyContent: 'space-between',
+                    paddingHorizontal: 10
+                }}>
+                <Pressable
+                    onPress={() => {
+                        navigation.navigate('Scores')
+                    }}
+                >
+                    <Text
+                        style={{
+                            ...styles.scoreText,
+                            ...styles.allScoreText
+                        }}>All Scores</Text>
+                </Pressable>
+                <View>
+                    <Text
+                        style={styles.scoreText} >
+                        Best score:{bestScore}</Text>
+                </View>
+            </View>
+        </View >)
     };
     const StartBtn: any = () => {
         return (<View
@@ -163,12 +264,23 @@ const Game: React.FC = () => {
                 }}
                 pressRetentionOffset={200}
                 style={styles.start}></TouchableOpacity>
-                <View><Text
-                    style={styles.startText}
-                >Start</Text></View>
+                <View>
+                    <Text
+                        style={styles.startText}
+                    >Start</Text>
+                </View>
+                <Pressable
+                    onPress={() => {
+                        setPlayerName('')
+                    }}
+                >
+                    <Text
+                        style={styles.playerName}
+                    >{playerName}</Text></Pressable>
             </View>
         </View>)
     };
+
     const StopBtn: any = () => {
         return (<View
             style={styles.actionBlock}
@@ -187,33 +299,47 @@ const Game: React.FC = () => {
             </View>
         </View>)
     };
-    interface partProps {
-        color: string,
-        pos: string
-    }
     const Part: any = ({ color, pos = 'top-left' }: partProps) => {
         return (<TouchableOpacity
             pressRetentionOffset={200}
-            disabled={gameOver || level == 0}
+            disabled={gameOver || level == 0 || loading}
             style={{
                 flex: 0.5,
                 opacity: (opacityColor == color ? 0.1 : 1),
                 backgroundColor: color,
+                borderColor: 'black',
+
                 ...(pos == 'top-left' ? {
                     borderBottomStartRadius: raduis,
                     borderTopStartRadius: raduis,
+                    borderStartWidth: 4,
+                    borderTopWidth: 4,
+                    borderBottomWidth: 4,
+                    borderEndWidth: 4
                 } : {}),
                 ...(pos == 'top-right' ? {
                     borderBottomEndRadius: raduis,
-                    borderTopEndRadius: raduis
+                    borderTopEndRadius: raduis,
+                    borderEndWidth: 4,
+                    borderTopWidth: 4,
+                    borderBottomWidth: 4,
+
                 } : {}),
                 ...(pos == 'bottom-left' ? {
                     borderBottomStartRadius: raduis,
-                    borderTopStartRadius: raduis
+                    borderTopStartRadius: raduis,
+                    borderStartWidth: 4,
+                    borderTopWidth: 4,
+                    borderBottomWidth: 4,
+                    borderEndWidth: 4
                 } : {}),
                 ...(pos == 'bottom-right' ? {
                     borderBottomEndRadius: raduis,
-                    borderTopEndRadius: raduis
+                    borderTopEndRadius: raduis,
+                    borderEndWidth: 4,
+                    borderBottomWidth: 4,
+                    borderTopWidth: 4,
+
                 } : {})
             }}
             onPress={() => {
@@ -224,22 +350,68 @@ const Game: React.FC = () => {
         )
     }
 
+    const YourName = () => {
+        return (
+            <View>
+                <View>
+                    <TxtInput
+                        value={playerName}
+                        onChange={v => {
+                            setPlayerName(v);
+                            AsyncStorage.setItem('playerName', v);
+                        }}
+                    />
+                </View>
+            </View>
+        )
+    }
     return (
         <View style={{ flex: 1 }}>
-            {gameOver && <TouchableWithoutFeedback onPress={() => {
-
-            }} >
-                <View style={styles.overlay} >
-                    <View
-                        style={{
-                            ...styles.centerNoFlex,
-                            marginTop: '40%',
-                        }}
-                    >
-                        <Text style={styles.gameOverText}>Oh, Bummer! {`\n`}  GAME OVER! :(</Text>
+            {
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={gameOver}
+                    onRequestClose={() => {
+                        setModalVisible(!modalVisible);
+                    }}>
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <View><Text style={styles.modalText}>Oh, Bummer! {`\n`}  GAME OVER! :(</Text></View>
+                            <View><Text>Your current score: {pattern.length}</Text></View>
+                            <View
+                                style={{
+                                    marginBottom: 20
+                                }}
+                            ><Text>Your best score: {bestScore}</Text></View>
+                            <Pressable
+                                style={[styles.button,
+                                styles.buttonClose]}
+                                onPress={() => stopGame()}>
+                                <Text style={styles.textStyle}>Try Again</Text>
+                            </Pressable>
+                        </View>
                     </View>
-                </View>
-            </TouchableWithoutFeedback>}
+                </Modal>
+
+                // <TouchableWithoutFeedback onPress={() => {
+
+                // }} >
+                //     <View style={styles.overlay} >
+                //         <View
+                //             style={{
+                //                 ...styles.centerNoFlex,
+                //                 marginTop: '40%',
+                //             }}
+                //         >
+                //             <View><Text style={styles.gameOverText}>Oh, Bummer! {`\n`}  GAME OVER! :(</Text></View>
+                //             <View><Text>Your best score: {bestScore}</Text></View>
+                //             <Pressable><Text>To your last 10 Results</Text></Pressable>
+
+                //         </View>
+                //     </View>
+                // </TouchableWithoutFeedback>
+            }
             <View style={{ flex: 1, flexDirection: 'row' }}>
                 <Part color={'red'} pos={'top-left'} />
                 <Part color={'green'} pos={'top-right'} />
@@ -256,21 +428,19 @@ const Game: React.FC = () => {
                 <Part color={'yellow'} pos={'bottom-right'} />
             </View>
             <View style={{
-                justifyContent: 'center',
-                alignItems: 'center',
-                alignSelf: 'center',
-                position: 'absolute',
-                top: circleTop
+                ...styles.topCircle,
+                top: circleTop,
             }}>
                 <View style={{
-                    backgroundColor: 'white',
-                    borderRadius: 10,
+                    ...styles.whiteSircle,
                     height: circleSize,
                     width: circleSize,
-                    justifyContent: 'flex-start',
-                    alignItems: 'center',
+
                 }}><Logo />
-                    {!level || gameOver ? <StartBtn /> : <StopBtn />}
+                    {playerName && (!level || gameOver) ?
+                        <StartBtn /> : playerName ?
+                            <StopBtn /> : loading ? null :
+                                <YourName />}
                 </View>
             </View>
         </View>
