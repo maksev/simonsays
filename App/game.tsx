@@ -7,7 +7,8 @@ import {
     TouchableWithoutFeedback,
     AnimatableNumericValue,
     Dimensions,
-    Pressable
+    Pressable,
+    Modal
 } from 'react-native';
 import { StackNavigationProp } from '@react-navigation/stack';
 import AsyncStorage from '@react-native-async-storage/async-storage';
@@ -29,6 +30,8 @@ const Game: React.FC = () => {
     const [playerName, setPlayerName] = useState<string>('');
     const [loading, setLoading] = useState<boolean>(false);
     const [bestScore, setBestScore] = useState<number>(0);
+    const [modalVisible, setModalVisible] = useState(false);
+
     const playerIndexClick = useRef<number>(0);
 
     //consts
@@ -364,23 +367,51 @@ const Game: React.FC = () => {
     }
     return (
         <View style={{ flex: 1 }}>
-            {gameOver && <TouchableWithoutFeedback onPress={() => {
-
-            }} >
-                <View style={styles.overlay} >
-                    <View
-                        style={{
-                            ...styles.centerNoFlex,
-                            marginTop: '40%',
-                        }}
-                    >
-                        <View><Text style={styles.gameOverText}>Oh, Bummer! {`\n`}  GAME OVER! :(</Text></View>
-                        <View><Text>Your best score: {bestScore}</Text></View>
-                        <Pressable><Text>To your last 10 Results</Text></Pressable>
-
+            {
+                <Modal
+                    animationType="slide"
+                    transparent={true}
+                    visible={gameOver}
+                    onRequestClose={() => {
+                        setModalVisible(!modalVisible);
+                    }}>
+                    <View style={styles.centeredView}>
+                        <View style={styles.modalView}>
+                            <View><Text style={styles.modalText}>Oh, Bummer! {`\n`}  GAME OVER! :(</Text></View>
+                            <View><Text>Your current score: {pattern.length}</Text></View>
+                            <View
+                                style={{
+                                    marginBottom: 20
+                                }}
+                            ><Text>Your best score: {bestScore}</Text></View>
+                            <Pressable
+                                style={[styles.button,
+                                styles.buttonClose]}
+                                onPress={() => stopGame()}>
+                                <Text style={styles.textStyle}>Try Again</Text>
+                            </Pressable>
+                        </View>
                     </View>
-                </View>
-            </TouchableWithoutFeedback>}
+                </Modal>
+
+                // <TouchableWithoutFeedback onPress={() => {
+
+                // }} >
+                //     <View style={styles.overlay} >
+                //         <View
+                //             style={{
+                //                 ...styles.centerNoFlex,
+                //                 marginTop: '40%',
+                //             }}
+                //         >
+                //             <View><Text style={styles.gameOverText}>Oh, Bummer! {`\n`}  GAME OVER! :(</Text></View>
+                //             <View><Text>Your best score: {bestScore}</Text></View>
+                //             <Pressable><Text>To your last 10 Results</Text></Pressable>
+
+                //         </View>
+                //     </View>
+                // </TouchableWithoutFeedback>
+            }
             <View style={{ flex: 1, flexDirection: 'row' }}>
                 <Part color={'red'} pos={'top-left'} />
                 <Part color={'green'} pos={'top-right'} />
