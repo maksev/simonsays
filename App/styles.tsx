@@ -37,6 +37,22 @@ const styles = StyleSheet.create({
         fontSize: 40,
         color: 'white'
     },
+    whiteSircle: {
+        backgroundColor: 'white',
+        borderRadius: 100,
+        borderBottomColor: 'black',
+        borderBottomWidth: 4,
+        borderEndWidth: 4,
+        borderStartWidth: 4,
+        alignItems: 'center',
+        justifyContent: 'flex-start',
+    },
+    topCircle: {
+        justifyContent: 'center',
+        alignItems: 'center',
+        alignSelf: 'center',
+        position: 'absolute',
+    },
     start: {
         borderRadius: (50 / 2),
         backgroundColor: 'red',
@@ -76,5 +92,23 @@ const styles = StyleSheet.create({
         width: '100%',
         height: '100%',
     },
+    input: {
+        borderColor: "gray",
+        width: 180,
+        borderWidth: 1,
+        borderRadius: 10,
+        padding: 10,
+    },
+    playerName: {
+        textDecorationLine: 'underline',
+        textDecorationColor: 'blue'
+    },
+    scoreText: {
+        color: 'yellow',
+        fontSize: 14,
+    },
+    allScoreText: {
+        textDecorationLine: 'underline',
+    }
 })
 export default styles;

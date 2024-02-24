@@ -1,27 +1,15 @@
-import type { StackNavigationProp } from "@react-navigation/stack";
-import { ParamListBase, useNavigation } from '@react-navigation/native';
-
-
-
-export type RootStackParamList = {
-
-    Home: undefined;
-
-    Game: undefined;
-
-};
-export type HomeScreenProps = StackNavigationProp<
-
-    RootStackParamList,
-
-    "Home"
-
->;
-
-export type GameScreenProps = StackNavigationProp<
-
-    RootStackParamList,
-
-    "Game"
-
->;
+export interface ScoreResults {
+    date: Date,
+    score: number
+}
+export interface Player {
+    name: string,
+    scores: Array<ScoreResults>
+}
+export interface partProps {
+    color: string,
+    pos: string
+}
+export interface scoreProps {
+    item: Player
+}
